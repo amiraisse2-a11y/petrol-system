@@ -458,7 +458,15 @@ LAYOUT = dict(
     paper_bgcolor="white",
     plot_bgcolor="#FAFAFA",
     font=dict(color="#333"),
-    margin=dict(l=10, r=10, t=45, b=10)
+    margin=dict(l=10, r=10, t=60, b=10)
+)
+
+# Config modebar (barre icônes Plotly) — masquer les icônes inutiles
+MODEBAR = dict(
+    remove=["zoom","pan","select","lasso2d",
+            "zoomIn2d","zoomOut2d","autoScale2d",
+            "toImage","resetScale2d"],
+    orientation="v"
 )
 
 # ════════════════════════════════════════════
@@ -516,7 +524,7 @@ if page == "Tableau de Bord":
                            title="bbl/jour"),
                 hovermode="x unified", **LAYOUT
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
         with cd:
             fig2 = go.Figure()
@@ -535,7 +543,7 @@ if page == "Tableau de Bord":
                             bordercolor="rgba(224,123,0,0.2)"),
                 hovermode="x unified", **LAYOUT
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
     # Carte — style clair OpenStreetMap
     st.markdown("""
@@ -565,7 +573,7 @@ if page == "Tableau de Bord":
                         bordercolor="rgba(224,123,0,0.3)",
                         font=dict(color="#333"))
         )
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, use_container_width=True, config={"displayModeBar": False})
 
 # ════════════════════════════════════════════
 # PAGE 2 — PUITS & CHAMPS
@@ -626,7 +634,7 @@ elif page == "Puits et Champs":
                          title="Repartition par Champ",
                          color_discrete_sequence=COLORS["defaut"])
             fig.update_layout(**LAYOUT)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
         with cd:
             cnt  = df.groupby(["champ","statut"]).size().reset_index(name="n")
             fig2 = px.bar(cnt, x="champ", y="n", color="statut",
@@ -636,7 +644,7 @@ elif page == "Puits et Champs":
                                               "Critique":"#E74C3C"})
             fig2.update_layout(xaxis=dict(gridcolor="#EEE"),
                                yaxis=dict(gridcolor="#EEE"), **LAYOUT)
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
 # ════════════════════════════════════════════
 # PAGE 3 — ANALYSE PRODUCTION
@@ -679,7 +687,7 @@ elif page == "Analyse Production":
                 xaxis=dict(gridcolor="#EEE"),
                 yaxis=dict(gridcolor="#EEE"), **LAYOUT
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
         with cd:
             fig2 = px.pie(
@@ -688,7 +696,7 @@ elif page == "Analyse Production":
                 color_discrete_sequence=COLORS["defaut"], hole=0.4
             )
             fig2.update_layout(**LAYOUT)
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
 
         st.markdown("""
         <div style="color:#888;font-size:0.72rem;letter-spacing:1.5px;
@@ -1071,7 +1079,7 @@ elif page == "Declin et Previsions":
                         bordercolor="rgba(224,123,0,0.3)"),
             hovermode="x unified", **LAYOUT
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
     else:
         st.info("Aucune donnee pour ce puits sur la periode.")
 
@@ -1166,7 +1174,7 @@ elif page == "Rapports":
                     xaxis=dict(gridcolor="#EEE"),
                     yaxis=dict(gridcolor="#EEE"), **LAYOUT
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
                 st.divider()
                 st.subheader("Exporter le rapport")
