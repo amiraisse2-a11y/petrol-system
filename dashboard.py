@@ -185,7 +185,7 @@ elif page == "🛢️ Puits & Champs":
         if c in df.columns]
 
     st.dataframe(
-        df[cols_afficher].style.applymap(style_statut, subset=["statut"])
+        df[cols_afficher].style.map(style_statut, subset=["statut"])
         if not df.empty else df,
         use_container_width=True, hide_index=True
     )
