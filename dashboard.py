@@ -46,7 +46,7 @@ st.markdown("""
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0D1220 0%, #141B2D 100%);
-    border-right: 1px solid #F0A50030;
+    border-right: 1px solid rgba(240,165,0,0.19);
 }
 
 /* ── Titre sidebar ── */
@@ -59,7 +59,7 @@ st.markdown("""
 /* ── Métriques KPI ── */
 [data-testid="stMetric"] {
     background: linear-gradient(135deg, #141B2D, #1E2A42);
-    border: 1px solid #F0A50040;
+    border: 1px solid rgba(240,165,0,0.25);
     border-radius: 12px;
     padding: 16px !important;
     box-shadow: 0 4px 20px rgba(240,165,0,0.08);
@@ -116,14 +116,14 @@ st.markdown("""
 [data-testid="stTextInput"] input,
 [data-testid="stTextArea"] textarea {
     background: #1E2A42 !important;
-    border: 1px solid #F0A50030 !important;
+    border: 1px solid rgba(240,165,0,0.19) !important;
     border-radius: 8px !important;
     color: #E8EDF5 !important;
 }
 
 /* ── Divider ── */
 hr {
-    border-color: #F0A50030 !important;
+    border-color: rgba(240,165,0,0.19) !important;
 }
 
 /* ── Titres ── */
@@ -276,7 +276,7 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown(
-    '<hr style="border-color:#F0A50030; margin:8px 0;">',
+    '<hr style="border-color:rgba(240,165,0,0.19); margin:8px 0;">',
     unsafe_allow_html=True
 )
 
@@ -291,7 +291,7 @@ page = st.sidebar.radio("", [
 ])
 
 st.sidebar.markdown(
-    '<hr style="border-color:#F0A50030; margin:8px 0;">',
+    '<hr style="border-color:rgba(240,165,0,0.19); margin:8px 0;">',
     unsafe_allow_html=True
 )
 st.sidebar.markdown(
@@ -312,21 +312,21 @@ nb_jours   = int(periode_label.split()[0])
 date_fin   = date.today()
 date_debut = date_fin - timedelta(days=nb_jours)
 
-if st.sidebar.button("🔄  Actualiser", use_container_width=True):
+if st.sidebar.button("🔄  Actualiser", width='stretch'):
     verifier_alertes()
     st.rerun()
 
 resume = resume_alertes()
 if resume["critiques"] > 0:
     st.sidebar.markdown(
-        f'<div style="background:#FF4B4B15;border:1px solid #FF4B4B40;'
+        f'<div style="background:#FF4B4B15;border:1px solid rgba(255,75,75,0.25);'
         f'border-radius:8px;padding:8px 12px;margin:4px 0;'
         f'color:#FF4B4B;font-size:0.8rem;">🔴 {resume["critiques"]} critique(s)</div>',
         unsafe_allow_html=True
     )
 if resume["alertes"] > 0:
     st.sidebar.markdown(
-        f'<div style="background:#F0A50015;border:1px solid #F0A50040;'
+        f'<div style="background:#F0A50015;border:1px solid rgba(240,165,0,0.25);'
         f'border-radius:8px;padding:8px 12px;margin:4px 0;'
         f'color:#F0A500;font-size:0.8rem;">⚠️ {resume["alertes"]} alerte(s)</div>',
         unsafe_allow_html=True
@@ -406,7 +406,7 @@ if page == "🏠  Tableau de Bord":
                 hovermode="x unified",
                 margin=dict(l=10, r=10, t=40, b=10)
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         with cd:
             couleurs_champs = {
@@ -435,11 +435,11 @@ if page == "🏠  Tableau de Bord":
                 plot_bgcolor="#141B2D",
                 xaxis=dict(gridcolor="#1E2A42", color="#8B9BB4"),
                 yaxis=dict(gridcolor="#1E2A42", color="#8B9BB4"),
-                legend=dict(bgcolor="#1E2A42", bordercolor="#F0A50030"),
+                legend=dict(bgcolor="#1E2A42", bordercolor="rgba(240,165,0,0.2)"),
                 hovermode="x unified",
                 margin=dict(l=10, r=10, t=40, b=10)
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width='stretch')
 
     # Carte puits
     st.markdown("""
@@ -452,7 +452,7 @@ if page == "🏠  Tableau de Bord":
     df_puits = lire_puits()
     if not df_puits.empty and "latitude" in df_puits.columns:
         couleurs = {"Actif":"#00CC96","Alerte":"#F0A500","Critique":"#FF4B4B"}
-        fig_map  = px.scatter_mapbox(
+        fig_map  = px.scatter_map(
             df_puits, lat="latitude", lon="longitude",
             color="statut", hover_name="nom_puits",
             hover_data=["champ","operateur","statut"],
@@ -460,14 +460,14 @@ if page == "🏠  Tableau de Bord":
             zoom=7, center={"lat":4.3,"lon":-3.7}
         )
         fig_map.update_layout(
-            mapbox_style="carto-darkmatter",
+            map_style="carto-darkmatter",
             height=420,
             paper_bgcolor="#141B2D",
             margin=dict(l=0, r=0, t=0, b=0),
-            legend=dict(bgcolor="#1E2A42", bordercolor="#F0A50030",
+            legend=dict(bgcolor="#1E2A42", bordercolor="rgba(240,165,0,0.2)",
                         font=dict(color="#E8EDF5"))
         )
-        st.plotly_chart(fig_map, use_container_width=True)
+        st.plotly_chart(fig_map, width='stretch')
 
 # ════════════════════════════════════════════
 # PAGE 2 — PUITS & CHAMPS
@@ -513,7 +513,7 @@ elif page == "🛢️  Puits & Champs":
     st.dataframe(
         df[cols_afficher].style.map(style_statut, subset=["statut"])
         if not df.empty else df,
-        use_container_width=True, hide_index=True
+        width='stretch', hide_index=True
     )
 
     if not df.empty:
@@ -529,7 +529,7 @@ elif page == "🛢️  Puits & Champs":
                 font=dict(color="#E8EDF5"),
                 title_font=dict(color="#E8EDF5")
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
         with cd:
             cnt  = df.groupby(["champ","statut"]).size().reset_index(name="count")
             fig2 = px.bar(cnt, x="champ", y="count", color="statut",
@@ -546,7 +546,7 @@ elif page == "🛢️  Puits & Champs":
                 title_font=dict(color="#E8EDF5"),
                 legend=dict(bgcolor="#1E2A42")
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width='stretch')
 
 # ════════════════════════════════════════════
 # PAGE 3 — ANALYSE PRODUCTION
@@ -597,7 +597,7 @@ elif page == "📊  Analyse Production":
                 yaxis=dict(gridcolor="#1E2A42", color="#8B9BB4"),
                 margin=dict(l=10, r=10, t=50, b=10)
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
         with cd:
             fig2 = px.pie(
@@ -612,7 +612,7 @@ elif page == "📊  Analyse Production":
                 title_font=dict(color="#E8EDF5"),
                 legend=dict(bgcolor="#1E2A42")
             )
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width='stretch')
 
         st.markdown("""
         <div style="color:#8B9BB4; font-size:0.75rem; letter-spacing:1.5px;
@@ -626,7 +626,7 @@ elif page == "📊  Analyse Production":
         aff["Production_Totale"] = aff["Production_Totale"].map("{:,.0f} bbl".format)
         aff["Revenu_USD"]        = aff["Revenu_USD"].map("${:,.0f}".format)
         aff["Revenu_FCFA"]       = aff["Revenu_FCFA"].map("{:,.0f} FCFA".format)
-        st.dataframe(aff, use_container_width=True, hide_index=True)
+        st.dataframe(aff, width='stretch', hide_index=True)
     else:
         st.info("Aucune donnée disponible pour cette période.")
 
@@ -647,7 +647,7 @@ elif page == "📝  Saisie des Données":
     with onglet1:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("""
-        <div style="background:#1E2A42;border:1px solid #F0A50030;
+        <div style="background:#1E2A42;border:1px solid rgba(240,165,0,0.19);
                     border-radius:10px;padding:14px 18px;margin-bottom:20px;
                     color:#8B9BB4;font-size:0.85rem;">
             📱 L'ingénieur terrain remplit ce formulaire depuis son téléphone
@@ -661,7 +661,7 @@ elif page == "📝  Saisie des Données":
             puits_saisi = st.selectbox("🛢️ Puits", list(PROFILS_PUITS.keys()))
             champ_auto  = PROFILS_PUITS[puits_saisi]["champ"]
             st.markdown(
-                f'<div style="background:#F0A50015;border:1px solid #F0A50030;'
+                f'<div style="background:#F0A50015;border:1px solid rgba(240,165,0,0.19);'
                 f'border-radius:8px;padding:8px 14px;margin:4px 0 12px 0;'
                 f'color:#F0A500;font-size:0.85rem;">Champ : <b>{champ_auto}</b></div>',
                 unsafe_allow_html=True
@@ -698,7 +698,7 @@ elif page == "📝  Saisie des Données":
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("💾  Enregistrer la mesure", type="primary",
-                     use_container_width=True):
+                     width='stretch'):
             sauvegarder_mesure(
                 date_saisie, puits_saisi, champ_auto,
                 production, prod_gaz, prod_eau,
@@ -714,7 +714,7 @@ elif page == "📝  Saisie des Données":
     with onglet2:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("""
-        <div style="background:#1E2A42;border:1px solid #F0A50030;
+        <div style="background:#1E2A42;border:1px solid rgba(240,165,0,0.19);
                     border-radius:10px;padding:14px 18px;margin-bottom:20px;
                     color:#8B9BB4;font-size:0.85rem;">
             📂 Uploadez votre fichier Excel ou CSV mensuel.
@@ -749,7 +749,7 @@ elif page == "📝  Saisie des Données":
                              if fichier.name.endswith(".csv")
                              else pd.read_excel(fichier))
                 st.success(f"✅ **{len(df_import)} lignes** détectées")
-                st.dataframe(df_import.head(), use_container_width=True)
+                st.dataframe(df_import.head(), width='stretch')
 
                 cols_req  = ["date","puits","champ","production_huile_bbl","water_cut"]
                 manquants = [c for c in cols_req if c not in df_import.columns]
@@ -757,7 +757,7 @@ elif page == "📝  Saisie des Données":
                     st.error(f"❌ Colonnes manquantes : {manquants}")
                 else:
                     if st.button("📥  Importer toutes les données",
-                                 type="primary", use_container_width=True):
+                                 type="primary", width='stretch'):
                         conn   = sqlite3.connect(DB_PATH, check_same_thread=False)
                         succes = 0
                         for _, row in df_import.iterrows():
@@ -811,7 +811,7 @@ elif page == "📝  Saisie des Données":
                     "2026-04-26,Sankofa-1,Sankofa,5200,0.20,Actif"
                 ))
             if donnees and st.button("📥  Importer", type="primary",
-                                      use_container_width=True):
+                                      width='stretch'):
                 try:
                     from io import StringIO
                     df_c   = pd.read_csv(StringIO(donnees))
@@ -871,7 +871,7 @@ elif page == "⚠️  Alertes":
     afficher_header("Système d'Alertes",
                     "Surveillance en temps réel des seuils critiques")
 
-    if st.button("🔍  Vérifier toutes les alertes", use_container_width=True):
+    if st.button("🔍  Vérifier toutes les alertes", width='stretch'):
         nb = len(verifier_alertes())
         st.success(f"✅ Vérification terminée — {nb} alertes générées")
 
@@ -892,7 +892,7 @@ elif page == "⚠️  Alertes":
 
         for _, a in df_al[df_al["niveau"]=="CRITIQUE"].iterrows():
             st.markdown(f"""
-            <div style="background:#FF4B4B10;border:1px solid #FF4B4B40;
+            <div style="background:#FF4B4B10;border:1px solid rgba(255,75,75,0.25);
                         border-left:4px solid #FF4B4B;border-radius:8px;
                         padding:12px 16px;margin:6px 0;color:#E8EDF5;">
                 🔴 <b>CRITIQUE</b> &nbsp;|&nbsp; <b>{a['puits']}</b>
@@ -904,7 +904,7 @@ elif page == "⚠️  Alertes":
 
         for _, a in df_al[df_al["niveau"]=="ALERTE"].iterrows():
             st.markdown(f"""
-            <div style="background:#F0A50010;border:1px solid #F0A50040;
+            <div style="background:#F0A50010;border:1px solid rgba(240,165,0,0.25);
                         border-left:4px solid #F0A500;border-radius:8px;
                         padding:12px 16px;margin:6px 0;color:#E8EDF5;">
                 ⚠️ <b>ALERTE</b> &nbsp;|&nbsp; <b>{a['puits']}</b>
@@ -976,12 +976,12 @@ elif page == "📈  Déclin & Prévisions":
             xaxis=dict(gridcolor="#1E2A42", color="#8B9BB4"),
             yaxis=dict(gridcolor="#1E2A42", color="#8B9BB4",
                        title="Production (bbl/jour)"),
-            legend=dict(bgcolor="#1E2A42", bordercolor="#F0A50030",
+            legend=dict(bgcolor="#1E2A42", bordercolor="rgba(240,165,0,0.2)",
                         font=dict(color="#E8EDF5")),
             hovermode="x unified",
             margin=dict(l=10, r=10, t=50, b=10)
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     else:
         st.info("Aucune donnée pour ce puits sur la période sélectionnée.")
 
@@ -1000,11 +1000,11 @@ elif page == "📋  Rapports":
     ])
 
     if st.button("📄  Générer le Rapport", type="primary",
-                 use_container_width=True):
+                 width='stretch'):
         with st.spinner("Génération en cours..."):
             rapport = production_par_champ(nb_jours)
             st.markdown(f"""
-            <div style="background:#1E2A42;border:1px solid #F0A50030;
+            <div style="background:#1E2A42;border:1px solid rgba(240,165,0,0.19);
                         border-radius:10px;padding:16px 20px;margin:16px 0;">
                 <div style="color:#F0A500;font-size:1rem;font-weight:700;
                             margin-bottom:8px;">📊 {type_r}</div>
@@ -1042,18 +1042,18 @@ elif page == "📋  Rapports":
                             WC_Moyen  =("water_cut","mean"),
                             Nb_Puits  =("puits","nunique")
                         ).reset_index()
-                        st.dataframe(grp, use_container_width=True, hide_index=True)
+                        st.dataframe(grp, width='stretch', hide_index=True)
 
                 elif type_r == "Rapport Alertes Actives":
                     df_al = lire_alertes(resolues=False)
-                    (st.dataframe(df_al, use_container_width=True, hide_index=True)
+                    (st.dataframe(df_al, width='stretch', hide_index=True)
                      if not df_al.empty else st.success("Aucune alerte active."))
                 else:
                     aff = rapport.copy()
                     aff["WaterCut_Moyen"]    = aff["WaterCut_Moyen"].map("{:.1%}".format)
                     aff["Production_Totale"] = aff["Production_Totale"].map("{:,.0f}".format)
                     aff["Revenu_USD"]        = aff["Revenu_USD"].map("${:,.0f}".format)
-                    st.dataframe(aff, use_container_width=True, hide_index=True)
+                    st.dataframe(aff, width='stretch', hide_index=True)
 
                 fig = go.Figure(go.Bar(
                     x=rapport["champ"],
@@ -1071,13 +1071,13 @@ elif page == "📋  Rapports":
                                font=dict(color="#E8EDF5")),
                     margin=dict(l=10, r=10, t=50, b=10)
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
                 st.download_button(
                     "⬇️  Télécharger CSV",
                     data=rapport.to_csv(index=False).encode("utf-8"),
                     file_name=f"rapport_petroci_{date.today()}.csv",
-                    mime="text/csv", use_container_width=True
+                    mime="text/csv", width='stretch'
                 )
             else:
                 st.warning("Aucune donnée disponible.")
