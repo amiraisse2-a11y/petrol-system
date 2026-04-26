@@ -15,12 +15,23 @@ def kpis_journaliers(date_cible=None):
 
     df = lire_production(date_debut=date_cible, date_fin=date_cible)
 
+    # Si pas de données hier, prendre avant-hier
+    if df.empty:
+        date_cible = str(date.today() - timedelta(days=2))
+        df = lire_production(date_debut=date_cible, date_fin=date_cible)
+
     if df.empty:
         return {}
 
-    prod_totale  = df["production_huile_bbl"].sum()
-    revenu_usd   = prod_totale * PRIX_BARIL
-    revenu_xof   = revenu_usd * TAUX
+    prod_totale = df["production_huile_bbl"].sum()
+    revenu_usd  = prod_totale * PRIX_BARIL
+    revenu_xof  = revenu_usd * TAUX
+
+    # Lire les statuts depuis la table puits (plus fiable)
+    df_puits = lire_puits()
+    nb_actifs    = int((df_puits["statut"] == "Actif").sum())    if not df_puits.empty else 0
+    nb_alertes   = int((df_puits["statut"] == "Alerte").sum())   if not df_puits.empty else 0
+    nb_critiques = int((df_puits["statut"] == "Critique").sum()) if not df_puits.empty else 0
 
     return {
         "date":                   date_cible,
@@ -28,9 +39,9 @@ def kpis_journaliers(date_cible=None):
         "production_gaz_mmscf":   round(df["production_gaz_mmscf"].sum(), 2),
         "water_cut_moyen":        round(df["water_cut"].mean(), 4),
         "pression_moyenne_psi":   round(df["pression_tete_psi"].mean(), 1),
-        "nb_puits_actifs":        int((df["statut"] == "Actif").sum()),
-        "nb_puits_alerte":        int((df["statut"] == "Alerte").sum()),
-        "nb_puits_critiques":     int((df["statut"] == "Critique").sum()),
+        "nb_puits_actifs":        nb_actifs,
+        "nb_puits_alerte":        nb_alertes,
+        "nb_puits_critiques":     nb_critiques,
         "revenu_journalier_usd":  round(revenu_usd, 0),
         "revenu_journalier_xof":  round(revenu_xof, 0),
     }
