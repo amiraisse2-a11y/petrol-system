@@ -1,10 +1,28 @@
-# analytics.py
-# Calculs, KPIs et analyses de production
+# analytics.py — PETROCI
+# Corrigé : nettoyage automatique des dates Supabase
 
 import pandas as pd
 from datetime import date, timedelta
 from database import lire_production, lire_puits
 from config import PRIX_BARIL, TAUX
+
+def nettoyer_dates(df):
+    """
+    Convertit les dates Supabase (timestamp) en date simple YYYY-MM-DD
+    Supabase peut renvoyer "2026-01-27T00:00:00" ou "2026-01-27 23:59:59.999"
+    On normalise tout en "2026-01-27"
+    """
+    if df.empty or "date" not in df.columns:
+        return df
+    try:
+        df = df.copy()
+        df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
+    except Exception:
+        try:
+            df["date"] = df["date"].astype(str).str[:10]
+        except Exception:
+            pass
+    return df
 
 # ─────────────────────────────────────────
 # KPIs JOURNALIERS
@@ -14,11 +32,12 @@ def kpis_journaliers(date_cible=None):
         date_cible = str(date.today() - timedelta(days=1))
 
     df = lire_production(date_debut=date_cible, date_fin=date_cible)
+    df = nettoyer_dates(df)
 
-    # Si pas de données hier, prendre avant-hier
     if df.empty:
         date_cible = str(date.today() - timedelta(days=2))
         df = lire_production(date_debut=date_cible, date_fin=date_cible)
+        df = nettoyer_dates(df)
 
     if df.empty:
         return {}
@@ -27,23 +46,22 @@ def kpis_journaliers(date_cible=None):
     revenu_usd  = prod_totale * PRIX_BARIL
     revenu_xof  = revenu_usd * TAUX
 
-    # Lire les statuts depuis la table puits (plus fiable)
-    df_puits = lire_puits()
+    df_puits     = lire_puits()
     nb_actifs    = int((df_puits["statut"] == "Actif").sum())    if not df_puits.empty else 0
     nb_alertes   = int((df_puits["statut"] == "Alerte").sum())   if not df_puits.empty else 0
     nb_critiques = int((df_puits["statut"] == "Critique").sum()) if not df_puits.empty else 0
 
     return {
-        "date":                   date_cible,
-        "production_totale_bbl":  round(prod_totale, 0),
-        "production_gaz_mmscf":   round(df["production_gaz_mmscf"].sum(), 2),
-        "water_cut_moyen":        round(df["water_cut"].mean(), 4),
-        "pression_moyenne_psi":   round(df["pression_tete_psi"].mean(), 1),
-        "nb_puits_actifs":        nb_actifs,
-        "nb_puits_alerte":        nb_alertes,
-        "nb_puits_critiques":     nb_critiques,
-        "revenu_journalier_usd":  round(revenu_usd, 0),
-        "revenu_journalier_xof":  round(revenu_xof, 0),
+        "date":                  date_cible,
+        "production_totale_bbl": round(prod_totale, 0),
+        "production_gaz_mmscf":  round(df["production_gaz_mmscf"].sum(), 2),
+        "water_cut_moyen":       round(df["water_cut"].mean(), 4),
+        "pression_moyenne_psi":  round(df["pression_tete_psi"].mean(), 1),
+        "nb_puits_actifs":       nb_actifs,
+        "nb_puits_alerte":       nb_alertes,
+        "nb_puits_critiques":    nb_critiques,
+        "revenu_journalier_usd": round(revenu_usd, 0),
+        "revenu_journalier_xof": round(revenu_xof, 0),
     }
 
 # ─────────────────────────────────────────
@@ -53,10 +71,8 @@ def production_par_champ(periode_jours=30):
     date_fin   = date.today()
     date_debut = date_fin - timedelta(days=periode_jours)
 
-    df = lire_production(
-        date_debut=str(date_debut),
-        date_fin=str(date_fin)
-    )
+    df = lire_production(date_debut=str(date_debut), date_fin=str(date_fin))
+    df = nettoyer_dates(df)
 
     if df.empty:
         return pd.DataFrame()
@@ -83,17 +99,21 @@ def calculer_declin(puits_nom, periode_jours=90):
     date_debut = date_fin - timedelta(days=periode_jours)
 
     df = lire_production(
-        date_debut=str(date_debut),
-        date_fin=str(date_fin),
+        date_debut=str(date_debut), date_fin=str(date_fin),
         puits=puits_nom
     )
+    df = nettoyer_dates(df)
 
     if df.empty or len(df) < 2:
         return None
 
-    df = df.sort_values("date")
-    prod_debut = float(df.iloc[0]["production_huile_bbl"])
-    prod_fin   = float(df.iloc[-1]["production_huile_bbl"])
+    df         = df.sort_values("date")
+    df_valide  = df[df["production_huile_bbl"] > 0]
+    if len(df_valide) < 2:
+        return None
+
+    prod_debut = float(df_valide.iloc[0]["production_huile_bbl"])
+    prod_fin   = float(df_valide.iloc[-1]["production_huile_bbl"])
 
     if prod_debut == 0:
         return None
@@ -117,10 +137,8 @@ def historique_champs(periode_jours=90):
     date_fin   = date.today()
     date_debut = date_fin - timedelta(days=periode_jours)
 
-    df = lire_production(
-        date_debut=str(date_debut),
-        date_fin=str(date_fin)
-    )
+    df = lire_production(date_debut=str(date_debut), date_fin=str(date_fin))
+    df = nettoyer_dates(df)
 
     if df.empty:
         return pd.DataFrame()
