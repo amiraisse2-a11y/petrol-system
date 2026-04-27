@@ -119,13 +119,23 @@ def peupler_puits():
 # LIRE PUITS
 # ─────────────────────────────────────────
 def lire_puits(champ=None, statut=None):
-    if utiliser_supabase():
-        sb = get_supabase()
-        q = sb.table("puits").select("*")
-        if champ:  q = q.eq("champ", champ)
-        if statut: q = q.eq("statut", statut)
-        return pd.DataFrame(q.execute().data)
-    else:
+    try:
+        if utiliser_supabase():
+            sb = get_supabase()
+            q = sb.table("puits").select("*")
+            if champ:  q = q.eq("champ", champ)
+            if statut: q = q.eq("statut", statut)
+            data = q.execute().data
+            return pd.DataFrame(data) if data else pd.DataFrame()
+        else:
+            conn = get_sqlite()
+            sql = "SELECT * FROM puits WHERE 1=1"
+            if champ:  sql += f" AND champ='{champ}'"
+            if statut: sql += f" AND statut='{statut}'"
+            df = pd.read_sql_query(sql, conn)
+            conn.close()
+            return df
+    except Exception:
         conn = get_sqlite()
         sql = "SELECT * FROM puits WHERE 1=1"
         if champ:  sql += f" AND champ='{champ}'"
@@ -139,16 +149,28 @@ def lire_puits(champ=None, statut=None):
 # ─────────────────────────────────────────
 def lire_production(date_debut=None, date_fin=None,
                     champ=None, puits=None):
-    if utiliser_supabase():
-        sb = get_supabase()
-        q = sb.table("production_journaliere").select("*")
-        if date_debut: q = q.gte("date", str(date_debut))
-        if date_fin:   q = q.lte("date", str(date_fin))
-        if champ:      q = q.eq("champ", champ)
-        if puits:      q = q.eq("puits", puits)
-        data = q.execute().data
-        return pd.DataFrame(data) if data else pd.DataFrame()
-    else:
+    try:
+        if utiliser_supabase():
+            sb = get_supabase()
+            q = sb.table("production_journaliere").select("*")
+            if date_debut: q = q.gte("date", str(date_debut))
+            if date_fin:   q = q.lte("date", str(date_fin))
+            if champ:      q = q.eq("champ", champ)
+            if puits:      q = q.eq("puits", puits)
+            data = q.execute().data
+            return pd.DataFrame(data) if data else pd.DataFrame()
+        else:
+            conn = get_sqlite()
+            sql = "SELECT * FROM production_journaliere WHERE 1=1"
+            if date_debut: sql += f" AND date>='{date_debut}'"
+            if date_fin:   sql += f" AND date<='{date_fin}'"
+            if champ:      sql += f" AND champ='{champ}'"
+            if puits:      sql += f" AND puits='{puits}'"
+            sql += " ORDER BY date DESC"
+            df = pd.read_sql_query(sql, conn)
+            conn.close()
+            return df
+    except Exception:
         conn = get_sqlite()
         sql = "SELECT * FROM production_journaliere WHERE 1=1"
         if date_debut: sql += f" AND date>='{date_debut}'"
@@ -164,38 +186,67 @@ def lire_production(date_debut=None, date_fin=None,
 # LIRE ALERTES
 # ─────────────────────────────────────────
 def lire_alertes(resolues=False):
-    if utiliser_supabase():
-        sb = get_supabase()
-        q = sb.table("alertes").select("*").eq("resolue", resolues)
-        data = q.execute().data
-        return pd.DataFrame(data) if data else pd.DataFrame()
-    else:
-        conn = get_sqlite()
-        df = pd.read_sql_query(
-            f"SELECT * FROM alertes WHERE resolue={1 if resolues else 0} "
-            "ORDER BY date_alerte DESC", conn)
-        conn.close()
-        return df
+    # CORRECTION : convertir bool en int pour Supabase PostgreSQL
+    resolue_int = 1 if resolues else 0
+    try:
+        if utiliser_supabase():
+            sb = get_supabase()
+            q = sb.table("alertes").select("*").eq("resolue", resolue_int)
+            data = q.execute().data
+            return pd.DataFrame(data) if data else pd.DataFrame()
+        else:
+            conn = get_sqlite()
+            df = pd.read_sql_query(
+                f"SELECT * FROM alertes WHERE resolue={resolue_int} "
+                "ORDER BY date_alerte DESC", conn)
+            conn.close()
+            return df
+    except Exception:
+        try:
+            conn = get_sqlite()
+            df = pd.read_sql_query(
+                f"SELECT * FROM alertes WHERE resolue={resolue_int} "
+                "ORDER BY date_alerte DESC", conn)
+            conn.close()
+            return df
+        except Exception:
+            return pd.DataFrame()
 
 # ─────────────────────────────────────────
 # SAUVEGARDER ALERTE
 # ─────────────────────────────────────────
 def sauvegarder_alerte(puits, champ, type_alerte,
                         niveau, valeur, seuil, message):
-    if utiliser_supabase():
-        sb = get_supabase()
-        sb.table("alertes").insert({
-            "puits": puits, "champ": champ,
-            "type_alerte": type_alerte, "niveau": niveau,
-            "valeur_actuelle": valeur, "seuil": seuil,
-            "message": message
-        }).execute()
-    else:
-        conn = get_sqlite()
-        conn.cursor().execute("""
-            INSERT INTO alertes
-            (puits,champ,type_alerte,niveau,valeur_actuelle,seuil,message)
-            VALUES (?,?,?,?,?,?,?)
-        """, (puits, champ, type_alerte, niveau, valeur, seuil, message))
-        conn.commit()
-        conn.close()
+    try:
+        if utiliser_supabase():
+            sb = get_supabase()
+            sb.table("alertes").insert({
+                "puits": puits, "champ": champ,
+                "type_alerte": type_alerte, "niveau": niveau,
+                "valeur_actuelle": float(valeur),
+                "seuil": float(seuil),
+                "message": message,
+                "resolue": 0
+            }).execute()
+        else:
+            conn = get_sqlite()
+            conn.cursor().execute("""
+                INSERT INTO alertes
+                (puits,champ,type_alerte,niveau,valeur_actuelle,seuil,message)
+                VALUES (?,?,?,?,?,?,?)
+            """, (puits, champ, type_alerte, niveau, valeur, seuil, message))
+            conn.commit()
+            conn.close()
+    except Exception as e:
+        # Fallback SQLite si Supabase échoue
+        try:
+            conn = get_sqlite()
+            conn.cursor().execute("""
+                INSERT INTO alertes
+                (puits,champ,type_alerte,niveau,valeur_actuelle,seuil,message)
+                VALUES (?,?,?,?,?,?,?)
+            """, (puits, champ, type_alerte, niveau, valeur, seuil, message))
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
