@@ -1,63 +1,91 @@
-# config.py
-# Configuration globale du système PETROCI
+"""
+PETRO AFRICA — Configuration Centrale
+Mise à jour : ajout PRIX_GAZ_MMSCFD + constantes gaz Afrique de l'Ouest
+"""
 
-CONFIG = {
-    "database": {
-        "url": "",       # Rempli via secrets Streamlit
-        "key": ""        # Rempli via secrets Streamlit
-    },
-    "alertes": {
-        "water_cut_alerte":   0.50,
-        "water_cut_critique": 0.65,
-        "production_min_bbl": 2000,
-        "pression_min_psi":   200,
-        "declin_mensuel_max": 0.10
-    },
-    "champs": {
-        "Baleine": {
-            "operateur":       "ENI",
-            "type":            "Offshore",
-            "profondeur_eau_m": 1200,
-            "date_debut":      "2021-01-01"
-        },
-        "Sankofa": {
-            "operateur":       "TotalEnergies",
-            "type":            "Offshore",
-            "profondeur_eau_m": 800,
-            "date_debut":      "2015-06-01"
-        },
-        "Foxtrot": {
-            "operateur":       "PETROCI",
-            "type":            "Offshore",
-            "profondeur_eau_m": 600,
-            "date_debut":      "2005-03-01"
-        },
-        "Baobab": {
-            "operateur":       "CNR International",
-            "type":            "Offshore",
-            "profondeur_eau_m": 1000,
-            "date_debut":      "2005-01-01"
-        }
-    },
-    "prix_baril_USD": 78.5,
-    "taux_USD_XOF":   615
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ─── Supabase ────────────────────────────────────────────────────────────────
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+# ─── Application ─────────────────────────────────────────────────────────────
+APP_NAME    = "PETRO AFRICA"
+APP_VERSION = "2.1.0"
+APP_LOGO    = "🛢️"
+
+# ─── Unités par défaut ───────────────────────────────────────────────────────
+UNITE_DEBIT    = "BOPD"    # Barils par jour
+UNITE_GPI      = "MMscfd"  # Millions de pieds cubes par jour
+UNITE_PRESSION = "psi"
+UNITE_TEMP     = "°C"
+
+# ─── PRIX & RÉFÉRENCES MARCHÉ ────────────────────────────────────────────────
+
+# Huile — référence Brent/Dated
+PRIX_BARIL = 75.0          # USD/bbl  (Brent spot, mise à jour manuelle recommandée)
+
+# Gaz — référence Afrique de l'Ouest
+# Sources : NLNG (Nigeria), GTA (Sénégal/Mauritanie), Foxtrot/Sankofa (CI)
+# Fourchette typique : 3.5–6.0 USD/MMBtu selon contrat et destination
+PRIX_GAZ_MMBTU    = 4.5    # USD/MMBtu  ← NOUVEAU — tarif moyen contrats AOG
+PRIX_GAZ_MMSCFD   = 4.5    # Alias explicite pour la facturation par MMscfd/j
+                             # (1 MMscfd ≈ 1 000 MMBtu/j en conditions standard)
+
+# Conversion énergétique gaz → BOE
+# 1 BOE ≈ 5.8 MMBtu  (API/SPE standard)
+GAZ_MMBTU_PAR_BOE = 5.8
+
+# Condensat (si champ gaz à condensat)
+PRIX_CONDENSAT = 72.0       # USD/bbl  (rabais ~3–5 $/bbl vs Brent)
+
+# ─── PARAMÈTRES FISCAUX CÔTE D'IVOIRE (Code Pétrolier 1996, amendé 2012) ───
+ROYALTIES_HUILE_PCT = 12.5  # % sur revenus bruts huile
+ROYALTIES_GAZ_PCT   = 8.0   # % sur revenus bruts gaz
+IMPOT_SOCIETES_PCT  = 30.0  # % (taux standard Côte d'Ivoire)
+PROFIT_OIL_SPLIT    = 0.60  # Part état sur profit oil (contrat de partage type)
+
+# ─── PARAMÈTRES PRODUCTION ───────────────────────────────────────────────────
+DECLINE_RATE_DEFAULT = 10.0   # % annuel (déclin exponentiel)
+WATER_CUT_DEFAULT    = 0.20   # fraction (20%)
+GOR_DEFAULT          = 500.0  # scf/bbl (Gas-Oil Ratio)
+
+# ─── ESG / FLARING ───────────────────────────────────────────────────────────
+# Facteurs d'émission IPCC/GIE
+CO2_PAR_TONNE_GAZ_TORCHE  = 2.75   # tCO2/t gaz brûlé
+GAZ_DENSITÉ_KG_M3          = 0.75   # kg/m³ (gaz naturel moyen)
+METHANE_GWP100             = 28.0   # Global Warming Potential CH4 (GIEC AR6)
+FLARING_FRACTION_DEFAULT   = 0.05   # 5% de la production gaz torchée (benchmark CI)
+
+# Réglementation PETROCI : objectif zéro torchage systématique d'ici 2030
+PETROCI_FLARING_TARGET_PCT = 2.0   # % cible max flaring 2030
+
+# ─── WACC / FINANCE ──────────────────────────────────────────────────────────
+WACC_DEFAULT    = 12.0   # % (risque pays CI inclus)
+WACC_LOW_RISK   = 10.0   # % (opérateur majeur, financement BEI/IFC)
+WACC_HIGH_RISK  = 18.0   # % (exploration early-stage)
+
+# ─── CHAMPS RÉFÉRENCE CÔTE D'IVOIRE ─────────────────────────────────────────
+CHAMPS = {
+    "Baleine":  {"type": "huile",    "operateur": "ENI/PETROCI", "debut": 2023},
+    "Sankofa":  {"type": "gaz",      "operateur": "ENI/PETROCI", "debut": 2017},
+    "Foxtrot":  {"type": "gaz",      "operateur": "FOXTROT Int.","debut": 1999},
+    "Espoir":   {"type": "huile/gaz","operateur": "CNR Int.",    "debut": 2002},
+    "Baobab":   {"type": "huile",    "operateur": "CNR Int.",    "debut": 2005},
 }
 
-SEUILS      = CONFIG["alertes"]
-CHAMPS      = CONFIG["champs"]
-PRIX_BARIL  = CONFIG["prix_baril_USD"]
-TAUX        = CONFIG["taux_USD_XOF"]
+# ─── ALERTES & SEUILS ────────────────────────────────────────────────────────
+SEUIL_ALERTE_WATERCUT   = 0.80   # 80% — seuil critique
+SEUIL_ALERTE_GOR        = 2000   # scf/bbl — gas coning potentiel
+SEUIL_ALERTE_DECLINE    = 20.0   # %/an — déclin accéléré anormal
+SEUIL_FLARING_ALERTE    = 0.10   # 10% — alerte réglementaire
 
-# Profils de production par puits
-PROFILS_PUITS = {
-    "Baleine-1": {"prod_base": 8500, "declin": 0.004, "wc_base": 0.35, "pression_base": 420, "champ": "Baleine", "lat": 4.852, "lon": -3.987},
-    "Baleine-2": {"prod_base": 6200, "declin": 0.005, "wc_base": 0.42, "pression_base": 380, "champ": "Baleine", "lat": 4.855, "lon": -3.991},
-    "Baleine-3": {"prod_base": 9100, "declin": 0.003, "wc_base": 0.28, "pression_base": 450, "champ": "Baleine", "lat": 4.848, "lon": -3.983},
-    "Baleine-4": {"prod_base": 3800, "declin": 0.008, "wc_base": 0.61, "pression_base": 290, "champ": "Baleine", "lat": 4.860, "lon": -3.995},
-    "Sankofa-1": {"prod_base": 5200, "declin": 0.006, "wc_base": 0.20, "pression_base": 310, "champ": "Sankofa", "lat": 4.120, "lon": -3.456},
-    "Sankofa-2": {"prod_base": 4800, "declin": 0.006, "wc_base": 0.33, "pression_base": 340, "champ": "Sankofa", "lat": 4.125, "lon": -3.461},
-    "Sankofa-3": {"prod_base": 3200, "declin": 0.007, "wc_base": 0.25, "pression_base": 360, "champ": "Sankofa", "lat": 4.118, "lon": -3.451},
-    "Foxtrot-1": {"prod_base": 2100, "declin": 0.010, "wc_base": 0.55, "pression_base": 210, "champ": "Foxtrot", "lat": 3.890, "lon": -3.234},
-    "Foxtrot-2": {"prod_base": 1800, "declin": 0.012, "wc_base": 0.68, "pression_base": 195, "champ": "Foxtrot", "lat": 3.895, "lon": -3.238},
-    "Baobab-1":  {"prod_base": 3500, "declin": 0.007, "wc_base": 0.40, "pression_base": 280, "champ": "Baobab",  "lat": 4.350, "lon": -3.678},
-}
+# ─── RAPPORT ─────────────────────────────────────────────────────────────────
+RAPPORT_LOGO_PATH   = "assets/logo_petro_africa.png"
+RAPPORT_FOOTER      = "PETRO AFRICA Dashboard — Confidentiel"
+RAPPORT_AUTEUR      = "PETRO AFRICA Analytics Platform"
+EXCEL_COULEUR_HEADER = "1B4F72"   # Bleu pétrole (hex sans #)
+EXCEL_COULEUR_ACCENT = "F39C12"   # Or/orange
